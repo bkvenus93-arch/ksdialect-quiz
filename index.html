@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>경상도 방언 퀴즈</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAF8F4;
+  --ink:#22302f;
+  --mut:#6b7775;
+  --card:#ffffff;
+  --radius:20px;
+  --font:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+}
+/* 병아리 모드: 민트 그린 & 스카이 블루 */
+body[data-mode="class"]{
+  --bg:#F0FAF7;
+  --c1:#A8EBD6; --c1e:#69C9AB;
+  --c2:#B4DDFA; --c2e:#72B5E4;
+  --deep:#1F7A66; --soft:#DDF5EC;
+}
+/* 탑티어 모드: 소프트 핑크 & 라벤더 */
+body[data-mode="after"]{
+  --bg:#FCF3F8;
+  --c1:#F9C6DB; --c1e:#E48FB4;
+  --c2:#D9CCF6; --c2e:#A993E0;
+  --deep:#A2487A; --soft:#F8E3EE;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--ink);
+  transition:background .3s;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none}
+#app{max-width:980px;margin:0 auto;padding:32px 20px 56px}
+
+/* ---------- 시작 화면 ---------- */
+.home-head{margin:24px 0 36px}
+.home-head .kicker{font-size:16px;font-weight:500;color:var(--mut);margin-bottom:8px}
+.home-head h1{font-size:clamp(36px,7vw,56px);font-weight:900;letter-spacing:-0.03em;line-height:1.15}
+.home-head p{margin-top:14px;font-size:18px;color:var(--mut);line-height:1.6}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.mode{
+  text-align:left;border-radius:var(--radius);padding:28px 26px 24px;
+  min-height:230px;display:flex;flex-direction:column;justify-content:space-between;
+  transition:transform .15s, box-shadow .15s;
+}
+.mode.m-class{background:#A8EBD6;box-shadow:0 7px 0 #69C9AB,0 18px 30px rgba(60,150,125,.22);color:#143d33}
+.mode.m-after{background:#F4C3DA;box-shadow:0 7px 0 #E08FB5,0 18px 30px rgba(190,90,140,.2);color:#4a1c36}
+.mode:hover{transform:translateY(-3px)}
+.mode:active{transform:translateY(4px)}
+.mode.m-class:active{box-shadow:0 3px 0 #69C9AB,0 8px 16px rgba(60,150,125,.2)}
+.mode.m-after:active{box-shadow:0 3px 0 #E08FB5,0 8px 16px rgba(190,90,140,.2)}
+.mode .name{font-size:32px;font-weight:900;letter-spacing:-0.02em}
+.mode .desc{font-size:18px;font-weight:500;margin-top:8px;opacity:.8}
+.mode .best{font-size:16px;font-weight:700;margin-top:28px;opacity:.75}
+.mode .go{font-size:18px;font-weight:700;margin-top:6px}
+.home-note{margin-top:28px;font-size:15px;color:var(--mut)}
+
+/* ---------- 퀴즈 화면 ---------- */
+.topbar{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.back{font-size:16px;font-weight:700;color:var(--deep);padding:8px 14px;border-radius:12px;background:var(--soft)}
+.back:hover{filter:brightness(.97)}
+.modetag{font-size:16px;font-weight:700;color:var(--deep)}
+.score{margin-left:auto;font-size:18px;font-weight:700}
+.score b{font-size:24px;color:var(--deep)}
+.progress{display:flex;gap:4px;margin-bottom:24px}
+.progress i{flex:1;height:8px;border-radius:4px;background:rgba(0,0,0,.08)}
+.progress i.ok{background:var(--c1e)}
+.progress i.ng{background:#c9c9c9}
+.progress i.now{background:var(--c2e)}
+
+.qcard{
+  background:var(--card);border-radius:var(--radius);
+  padding:36px 32px 32px;margin-bottom:26px;
+  box-shadow:0 10px 30px rgba(40,50,50,.09);
+}
+.qno{font-size:16px;font-weight:500;color:var(--mut);display:flex;justify-content:space-between}
+.qtext{font-size:clamp(30px,5.6vw,46px);font-weight:900;line-height:1.35;letter-spacing:-0.02em;margin-top:16px;word-break:keep-all}
+.qask{font-size:24px;font-weight:700;color:var(--deep);margin-top:14px}
+
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.choice{
+  position:relative;text-align:left;display:flex;align-items:center;gap:14px;
+  min-height:96px;padding:18px 22px;border-radius:var(--radius);
+  font-size:24px;font-weight:700;line-height:1.35;word-break:keep-all;
+  transition:transform .12s, box-shadow .12s, opacity .35s, filter .35s;
+}
+.choice:nth-child(1),.choice:nth-child(4){background:var(--c1);box-shadow:0 6px 0 var(--c1e),0 14px 22px rgba(40,50,50,.12)}
+.choice:nth-child(2),.choice:nth-child(3){background:var(--c2);box-shadow:0 6px 0 var(--c2e),0 14px 22px rgba(40,50,50,.12)}
+.choice .n{
+  flex:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.75);
+  display:grid;place-items:center;font-size:16px;font-weight:700;
+}
+.choice:hover{transform:translateY(-2px)}
+.choice:active{transform:translateY(4px)}
+.choice:nth-child(1):active,.choice:nth-child(4):active{box-shadow:0 2px 0 var(--c1e)}
+.choice:nth-child(2):active,.choice:nth-child(3):active{box-shadow:0 2px 0 var(--c2e)}
+
+/* 상태 변화: 선택 완료 -> 흑백/흐릿하게, 정답만 선명하게 */
+.choices.done .choice{
+  opacity:.35;filter:grayscale(1);transform:none;pointer-events:none;
+  box-shadow:0 2px 0 rgba(0,0,0,.08);
+}
+.choices.done .choice.mine{opacity:.5;text-decoration:line-through;text-decoration-thickness:2px}
+.choices.done .choice.right{
+  opacity:1;filter:none;
+  outline:4px solid var(--deep);outline-offset:2px;
+}
+.choice .tag{
+  margin-left:auto;flex:none;font-size:14px;font-weight:700;color:#fff;
+  background:var(--deep);padding:4px 10px;border-radius:10px;display:none;
+}
+.choices.done .choice.right .tag{display:block}
+
+.after{margin-top:26px;display:flex;align-items:center;gap:18px;min-height:64px}
+.msg{font-size:22px;font-weight:700;flex:1;line-height:1.4}
+.msg.ok{color:var(--deep)}
+.msg.ng{color:#7a5a5a}
+.next{
+  font-size:20px;font-weight:700;padding:16px 30px;border-radius:var(--radius);
+  background:var(--deep);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.2);
+}
+.next:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.2)}
+.hint{margin-top:18px;font-size:14px;color:var(--mut)}
+
+/* ---------- 결과 화면 ---------- */
+.result{background:var(--card);border-radius:var(--radius);padding:40px 34px;box-shadow:0 10px 30px rgba(40,50,50,.09);margin-bottom:28px}
+.result .rk{font-size:18px;font-weight:700;color:var(--deep)}
+.result .big{font-size:clamp(56px,12vw,96px);font-weight:900;line-height:1.05;margin-top:8px;letter-spacing:-0.03em}
+.result .big small{font-size:.4em;font-weight:700;color:var(--mut)}
+.result .cm{font-size:20px;color:var(--mut);margin-top:12px;line-height:1.6}
+.btns{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap}
+.btn{font-size:20px;font-weight:700;padding:16px 28px;border-radius:var(--radius)}
+.btn.main{background:var(--deep);color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.2)}
+.btn.sub{background:var(--soft);color:var(--deep)}
+.btn:active{transform:translateY(3px)}
+h2.sec{font-size:26px;font-weight:900;margin:8px 0 16px}
+.notes{display:grid;gap:14px}
+.note{background:var(--card);border-radius:var(--radius);padding:20px 24px;box-shadow:0 6px 18px rgba(40,50,50,.07)}
+.note .nq{font-size:24px;font-weight:700;word-break:keep-all}
+.note .nr{margin-top:10px;font-size:20px;display:flex;gap:10px 22px;flex-wrap:wrap}
+.note .mine{color:var(--mut);text-decoration:line-through}
+.note .ans{font-weight:700;color:var(--deep)}
+.allright{background:var(--soft);border-radius:var(--radius);padding:26px;font-size:22px;font-weight:700;color:var(--deep)}
+
+@media (max-width:720px){
+  .modes,.choices{grid-template-columns:1fr}
+  .mode{min-height:190px}
+  .qcard{padding:26px 22px}
+  .choice{min-height:84px}
+  .after{flex-direction:column;align-items:stretch}
+  .next{text-align:center}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+var DATA = [
+  {q:"와 자꾸 널쭈노", a:"떨어뜨리냐", t:"00:10"},
+  {q:"퍼뜩 인나!", a:"일어나라", t:"00:27"},
+  {q:"아가 띠리하네~", a:"멍청하다", t:"00:43"},
+  {q:"절마 남사시럽다", a:"저놈 남보기 창피하다", t:"00:57"},
+  {q:"아이고 디다", a:"피곤하다", t:"01:13"},
+  {q:"천지삐까리다", a:"엄청나게 많다", t:"01:31", g:"many"},
+  {q:"단디 해라이", a:"제대로 하거라", t:"01:48"},
+  {q:"발까 주차뿔라", a:"발로 차버릴까보다", t:"02:05"},
+  {q:"인자마 칵~ 다 언성시랩다", a:"이젠 모두 다 지긋지긋하다", t:"02:22"},
+  {q:"아구~ 시구랍어래이~", a:"아이구 시끄러워", t:"02:39"},
+  {q:"하모 된다카이", a:"그래 하면 된다", t:"02:57"},
+  {q:"아가 와그래 깰받노?", a:"애가 왜그리 게으르니?", t:"03:14"},
+  {q:"앵가이 해라", a:"적당히 해라", t:"03:31"},
+  {q:"이거 낑가가 공가놔라", a:"이거 끼워서 받쳐놔라", t:"03:49"},
+  {q:"발까 이래이래이래 민때라", a:"발로 이렇게 문질러라", t:"04:06"},
+  {q:"백지 이캐놨네라", a:"괜히 이렇게 해놨네", t:"04:23"},
+  {q:"\u201C쌔그럽다\u201D의 뜻은?", a:"(맛이) 시다", t:"04:41", w:1},
+  {q:"\u201C데피다\u201D의 뜻은?", a:"데우다", t:"04:58", w:1},
+  {q:"\u201C파이다\u201D의 뜻은?", a:"별로다", t:"05:15", w:1},
+  {q:"\u201C디비라\u201D의 뜻은?", a:"뒤집다", t:"05:32", w:1},
+  {q:"\u201C쌔빌맀다\u201D의 뜻은?", a:"매우 많다", t:"05:50", g:"many", w:1},
+  {q:"\u201C우야꼬\u201D의 뜻은?", a:"어쩌지?", t:"06:07", w:1},
+  {q:"\u201C으은다\u201D의 뜻은?", a:"싫다", t:"06:23", w:1},
+  {q:"\u201C치아라\u201D의 뜻은?", a:"그만두어라", t:"06:38", w:1},
+  {q:"어깨가 \u201C우리하다\u201D의 뜻은?", a:"욱신욱신하다", t:"06:53", w:1},
+  {q:"니 \u201C삐낏나?\u201D의 뜻은?", a:"삐쳤나", t:"07:09", w:1},
+  {q:"니 \u201C머라카노?\u201D의 뜻은?", a:"무슨 말 하는거니", t:"07:24", w:1},
+  {q:"니 정지에 가가 저까치 좀 가꼬온나", a:"너 부엌에 가서 젓가락 좀 가지고 오렴", t:"07:39"},
+  {q:"빼다지에 바지 낑깃다 가바라", a:"서랍에 바지 끼였다 가서 봐", t:"07:55"},
+  {q:"와따 홀타! 빨리 사가 쭈 느라", a:"정말 싸다! 빨리 사서 집어 넣어라", t:"08:10"}
+];
+
+var MODES = {
+  "class": {name:"병아리 모드", n:10, desc:"10문제 · 가볍게 한 판"},
+  "after": {name:"탑티어 모드", n:30, desc:"30문제 · 전부 풀어보기"}
+};
+var RANKS = [
+  [0.9, "사투리 박사", "경상도 말을 거의 다 알아듣네요."],
+  [0.7, "경상도 토박이", "동네에서 오래 사신 분 같아요."],
+  [0.5, "동네 주민", "절반 넘게 맞혔어요. 조금만 더 하면 토박이예요."],
+  [0.3, "사투리 입문", "아직은 헷갈리지만 감이 잡히고 있어요."],
+  [0,   "서울 새내기", "틀린 문제를 보고 한 번 더 도전해 보세요."]
+];
+
+var app = document.getElementById("app");
+var S = {mode:null, list:[], i:0, score:0, wrong:[], marks:[], done:false, view:"home"};
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+  });
+}
+function shuffle(a){
+  a = a.slice();
+  for (var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+function loadBest(mode){
+  try { return JSON.parse(localStorage.getItem("dq_best_" + mode)); } catch(e){ return null; }
+}
+function saveBest(mode, score, total){
+  try {
+    var b = loadBest(mode);
+    if (!b || score / total > b.score / b.total){
+      localStorage.setItem("dq_best_" + mode, JSON.stringify({score:score, total:total}));
+    }
+  } catch(e){}
+}
+function makeChoices(item){
+  var pool = DATA.filter(function(d){
+    if (d.a === item.a) return false;
+    if (item.g && d.g === item.g) return false;
+    return true;
+  });
+  var wrongs = shuffle(pool).slice(0, 3).map(function(d){ return d.a; });
+  return shuffle([item.a].concat(wrongs));
+}
+
+/* ---------- 시작 ---------- */
+function showHome(){
+  S.view = "home";
+  document.body.removeAttribute("data-mode");
+  var bc = loadBest("class"), ba = loadBest("after");
+  function bestText(b){ return b ? "최고 기록 " + b.score + " / " + b.total : "아직 기록이 없어요"; }
+  app.innerHTML =
+    '<header class="home-head">' +
+      '<div class="kicker">영상으로 배우는</div>' +
+      '<h1>경상도 방언 퀴즈</h1>' +
+      '<p>사투리 한마디를 보고, 표준어 뜻을 골라 보세요.<br>모드를 고르면 바로 시작합니다.</p>' +
+    '</header>' +
+    '<div class="modes">' +
+      '<button class="mode m-class" data-m="class">' +
+        '<div><div class="name">병아리 모드</div><div class="desc">' + MODES["class"].desc + '</div></div>' +
+        '<div><div class="best">' + bestText(bc) + '</div><div class="go">시작하기 →</div></div>' +
+      '</button>' +
+      '<button class="mode m-after" data-m="after">' +
+        '<div><div class="name">탑티어 모드</div><div class="desc">' + MODES["after"].desc + '</div></div>' +
+        '<div><div class="best">' + bestText(ba) + '</div><div class="go">시작하기 →</div></div>' +
+      '</button>' +
+    '</div>' +
+    '<p class="home-note">문제와 보기 순서는 할 때마다 바뀝니다.</p>';
+  var bs = app.querySelectorAll(".mode");
+  for (var k = 0; k < bs.length; k++){
+    bs[k].addEventListener("click", function(e){ start(e.currentTarget.getAttribute("data-m")); });
+  }
+  window.scrollTo(0, 0);
+}
+
+function start(mode){
+  S.mode = mode;
+  S.list = shuffle(DATA).slice(0, MODES[mode].n);
+  S.i = 0; S.score = 0; S.wrong = []; S.marks = []; S.done = false;
+  document.body.setAttribute("data-mode", mode);
+  showQ();
+}
+
+/* ---------- 문제 ---------- */
+function showQ(){
+  S.view = "quiz";
+  S.done = false;
+  var item = S.list[S.i];
+  S.cur = {item:item, choices:makeChoices(item)};
+  var total = S.list.length;
+
+  var prog = "";
+  for (var k = 0; k < total; k++){
+    var cls = k < S.i ? (S.marks[k] ? "ok" : "ng") : (k === S.i ? "now" : "");
+    prog += '<i class="' + cls + '"></i>';
+  }
+  var ch = "";
+  for (var c = 0; c < 4; c++){
+    ch += '<button class="choice" data-c="' + c + '"><span class="n">' + (c + 1) + '</span><span>' +
+          esc(S.cur.choices[c]) + '</span><span class="tag">정답</span></button>';
+  }
+  app.innerHTML =
+    '<div class="topbar">' +
+      '<button class="back" id="back">← 처음으로</button>' +
+      '<span class="modetag">' + MODES[S.mode].name + '</span>' +
+      '<span class="score">점수 <b>' + S.score + '</b></span>' +
+    '</div>' +
+    '<div class="progress">' + prog + '</div>' +
+    '<div class="qcard">' +
+      '<div class="qno"><span>' + (S.i + 1) + ' / ' + total + '</span><span>영상 ' + item.t + '</span></div>' +
+      '<div class="qtext">' + esc(item.q) + '</div>' +
+      (item.w ? '' : '<div class="qask">무슨 뜻일까요?</div>') +
+    '</div>' +
+    '<div class="choices" id="choices">' + ch + '</div>' +
+    '<div class="after" id="after"></div>' +
+    '<div class="hint">키보드 1~4로 선택, Enter로 다음 문제</div>';
+
+  document.getElementById("back").addEventListener("click", function(){
+    if (confirm("처음 화면으로 돌아갈까요? 진행 중인 기록은 사라집니다.")) showHome();
+  });
+  var bs = app.querySelectorAll(".choice");
+  for (var k2 = 0; k2 < bs.length; k2++){
+    bs[k2].addEventListener("click", function(e){
+      pick(parseInt(e.currentTarget.getAttribute("data-c"), 10));
+    });
+  }
+  window.scrollTo(0, 0);
+}
+
+function pick(c){
+  if (S.done) return;
+  S.done = true;
+  var item = S.cur.item;
+  var chosen = S.cur.choices[c];
+  var ok = chosen === item.a;
+  S.marks[S.i] = ok;
+  if (ok) S.score++;
+  else S.wrong.push({q:item.q, mine:chosen, a:item.a});
+
+  var box = document.getElementById("choices");
+  box.className = "choices done";
+  var bs = box.querySelectorAll(".choice");
+  for (var k = 0; k < bs.length; k++){
+    if (S.cur.choices[k] === item.a) bs[k].className += " right";
+    else if (k === c) bs[k].className += " mine";
+  }
+  var last = S.i === S.list.length - 1;
+  document.getElementById("after").innerHTML =
+    '<div class="msg ' + (ok ? "ok" : "ng") + '">' +
+      (ok ? "정답이에요!" : "아쉬워요. 정답은 \u201C" + esc(item.a) + "\u201D") +
+    '</div>' +
+    '<button class="next" id="next">' + (last ? "결과 보기" : "다음 문제") + '</button>';
+  document.getElementById("next").addEventListener("click", next);
+  document.getElementById("next").focus();
+}
+
+function next(){
+  if (S.i < S.list.length - 1){ S.i++; showQ(); }
+  else showResult();
+}
+
+/* ---------- 결과 ---------- */
+function showResult(){
+  S.view = "result";
+  var total = S.list.length, ratio = S.score / total;
+  var rank = RANKS[RANKS.length - 1];
+  for (var k = 0; k < RANKS.length; k++){
+    if (ratio >= RANKS[k][0]){ rank = RANKS[k]; break; }
+  }
+  saveBest(S.mode, S.score, total);
+
+  var notes = "";
+  if (S.wrong.length === 0){
+    notes = '<div class="allright">틀린 문제가 하나도 없어요.</div>';
+  } else {
+    notes = '<div class="notes">';
+    for (var w = 0; w < S.wrong.length; w++){
+      var n = S.wrong[w];
+      notes += '<div class="note"><div class="nq">' + esc(n.q) + '</div>' +
+        '<div class="nr"><span class="mine">내 답 ' + esc(n.mine) + '</span>' +
+        '<span class="ans">정답 ' + esc(n.a) + '</span></div></div>';
+    }
+    notes += '</div>';
+  }
+  app.innerHTML =
+    '<div class="result">' +
+      '<div class="rk">' + MODES[S.mode].name + ' · ' + rank[1] + '</div>' +
+      '<div class="big">' + S.score + '<small> / ' + total + '</small></div>' +
+      '<div class="cm">' + rank[2] + '</div>' +
+      '<div class="btns">' +
+        '<button class="btn main" id="again">다시 풀기</button>' +
+        '<button class="btn sub" id="home">처음으로</button>' +
+      '</div>' +
+    '</div>' +
+    '<h2 class="sec">오답 노트</h2>' + notes;
+  document.getElementById("again").addEventListener("click", function(){ start(S.mode); });
+  document.getElementById("home").addEventListener("click", showHome);
+  window.scrollTo(0, 0);
+}
+
+/* ---------- 키보드 ---------- */
+document.addEventListener("keydown", function(e){
+  if (S.view !== "quiz") return;
+  if (e.key >= "1" && e.key <= "4"){ pick(parseInt(e.key, 10) - 1); }
+  else if (e.key === "Enter" && S.done){ e.preventDefault(); next(); }
+});
+
+showHome();
+</script>
+</body>
+</html>
